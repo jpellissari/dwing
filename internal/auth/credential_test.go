@@ -1,7 +1,7 @@
 package auth_test
 
 import (
-	"jpellissari/dwing/auth"
+	"jpellissari/dwing/internal/auth"
 	"os"
 	"testing"
 
@@ -163,4 +163,70 @@ func TestSaveAndLoadCredentials(t *testing.T) {
 	err = c2.Load(tf.Name())
 	assert.NoError(t, err, "Loading from a valid file should not return an error")
 	assert.EqualValues(t, c, c2, "The credentials retrieved should match the original credentials")
+}
+
+func TestDuplicateCredentials(t *testing.T) {
+	c := auth.Credentials{
+		{Environment: "env1", Username: "user1", Password: "pass1", Nickname: "nick1"},
+	}
+
+	testCases := []struct {
+		name       string
+		cred       auth.Credential
+		wantReturn bool
+	}{
+		{
+			name: "Return true if same env and username",
+			cred: auth.Credential{
+				Username:    "user1",
+				Environment: "env1",
+				Password:    "pass1",
+			},
+			wantReturn: true,
+		},
+		{
+			name: "Return false if same username and different env",
+			cred: auth.Credential{
+				Username:    "user1",
+				Environment: "different",
+				Password:    "pass1",
+			},
+			wantReturn: false,
+		},
+		{
+			name: "Return false if same env and different username",
+			cred: auth.Credential{
+				Username:    "different",
+				Environment: "env1",
+				Password:    "pass1",
+			},
+			wantReturn: false,
+		},
+		{
+			name: "Return false if username and env are different",
+			cred: auth.Credential{
+				Username:    "different",
+				Environment: "different",
+				Password:    "pass1",
+			},
+			wantReturn: false,
+		},
+		{
+			name: "Return true if username and env are equal but nickname is different",
+			cred: auth.Credential{
+				Username:    "user1",
+				Environment: "env1",
+				Password:    "pass1",
+				Nickname:    "teste",
+			},
+			wantReturn: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			equal := c.CheckDuplicate(tt.cred)
+			assert.Equal(t, tt.wantReturn, equal)
+		})
+	}
 }

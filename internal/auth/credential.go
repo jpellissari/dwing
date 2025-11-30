@@ -75,3 +75,12 @@ func (c *Credentials) Save(filename string) error {
 	return os.WriteFile(filename, js, 0600)
 
 }
+
+func (c *Credentials) CheckDuplicate(cred Credential) bool {
+	for _, existingCred := range *c {
+		if existingCred.Environment == cred.Environment && existingCred.Username == cred.Username {
+			return true
+		}
+	}
+	return false
+}
