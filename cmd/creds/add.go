@@ -1,11 +1,18 @@
 package creds
 
 import (
+	"errors"
+	"fmt"
+	"jpellissari/dwing/internal/auth"
+
 	"github.com/MakeNowJust/heredoc"
+	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 )
 
 func NewCredsAddCommand() *cobra.Command {
+	var cred = auth.Credential{}
+
 	var addCmd = &cobra.Command{
 		Use:   "add [flags]",
 		Short: "Add a new credential",
@@ -24,10 +31,82 @@ func NewCredsAddCommand() *cobra.Command {
 				-n, --nickname <nickname>        Specify a nickname for easy reference (optional)
 			`),
 		},
-		Run: func(cmd *cobra.Command, args []string) {
-			_ = cmd.Help()
+		RunE: func(cmd *cobra.Command, args []string) error {
+			flagMode := cred.Username != "" || cred.Password != "" || cred.Environment != "" || cred.Nickname != ""
+			if !flagMode {
+				err := promptForCredential(&cred)
+				if err != nil {
+					return fmt.Errorf("failed to get credential input: %w", err)
+				}
+
+				return addCredential(&cred)
+			}
+
+			if err := validateFlags(&cred); err != nil {
+				return err
+			}
+
+			return addCredential(&cred)
 		},
 	}
 
+	addCmd.Flags().StringVarP(&cred.Environment, "environment", "e", "", "Environment (required)")
+	addCmd.Flags().StringVarP(&cred.Username, "username", "u", "", "Username (required)")
+	addCmd.Flags().StringVarP(&cred.Password, "password", "p", "", "Password (required)")
+	addCmd.Flags().StringVarP(&cred.Nickname, "nickname", "n", "", "Nickname (optional)")
+
 	return addCmd
+}
+
+func validateFlags(c *auth.Credential) error {
+	allRequiredFlagsSet := c.Username != "" && c.Password != "" && c.Environment != ""
+
+	if !allRequiredFlagsSet {
+		return fmt.Errorf("when using flags, --username, --password, and --environment are required")
+	}
+
+	return nil
+}
+
+func promptForCredential(c *auth.Credential) error {
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Environment").
+				Prompt(">").
+				Value(&c.Environment).
+				Validate(requiredFieldValidator),
+			huh.NewInput().
+				Title("Username").
+				Prompt(">").
+				Value(&c.Username).
+				Validate(requiredFieldValidator),
+			huh.NewInput().
+				Title("Password").
+				Prompt(">").
+				Value(&c.Password).
+				EchoMode(huh.EchoModePassword).
+				Validate(requiredFieldValidator),
+			huh.NewInput().
+				Title("Nickname").
+				Prompt(">").
+				Value(&c.Nickname),
+		),
+	)
+
+	return form.Run()
+}
+
+func requiredFieldValidator(s string) error {
+	if s == "" {
+		return errors.New("this field is required")
+	}
+	return nil
+}
+
+func addCredential(c *auth.Credential) error {
+
+	fmt.Printf("Credential added successfully: (%s) - %s\n", c.Environment, c.Username)
+
+	return nil
 }
