@@ -1,0 +1,62 @@
+package auth
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+)
+
+type CredentialRepository interface {
+	Load() (Credentials, error)
+	Save(c Credentials) error
+}
+
+type JSONRepository struct {
+	filePath string
+}
+
+func NewJSONRepository(filePath string) *JSONRepository {
+	return &JSONRepository{filePath: filePath}
+}
+
+func (r *JSONRepository) Load() (Credentials, error) {
+	if _, err := os.Stat(r.filePath); errors.Is(err, os.ErrNotExist) {
+		return Credentials{}, nil
+	}
+
+	data, err := os.ReadFile(r.filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	if len(data) == 0 {
+		return Credentials{}, nil
+	}
+
+	var c Credentials
+	if err := json.Unmarshal(data, &c); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+
+	return c, nil
+}
+
+func (r *JSONRepository) Save(c Credentials) error {
+	dir := filepath.Dir(r.filePath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	data, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %w", err)
+	}
+
+	if err := os.WriteFile(r.filePath, data, 0600); err != nil {
+		return fmt.Errorf("failed to write file: %w", err)
+	}
+
+	return nil
+}

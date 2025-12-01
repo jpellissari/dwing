@@ -1,10 +1,8 @@
 package auth
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 )
 
 type Credential struct {
@@ -48,32 +46,6 @@ func (c *Credentials) Delete(i int) error {
 	*c = append(cl[:i-1], cl[i:]...)
 
 	return nil
-}
-
-func (c *Credentials) Load(filename string) error {
-	file, err := os.ReadFile(filename)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil
-		}
-		return err
-	}
-
-	if len(file) == 0 {
-		return nil
-	}
-
-	return json.Unmarshal(file, c)
-}
-
-func (c *Credentials) Save(filename string) error {
-	js, err := json.Marshal(c)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(filename, js, 0600)
-
 }
 
 func (c *Credentials) CheckDuplicate(cred Credential) bool {

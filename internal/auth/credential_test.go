@@ -2,7 +2,6 @@ package auth_test
 
 import (
 	"jpellissari/dwing/internal/auth"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -118,51 +117,6 @@ func TestDeleteInvalidIndex(t *testing.T) {
 
 	err = c.Delete(2)
 	assert.Error(t, err, "Deleting with an out-of-bounds index should return an error")
-}
-
-func TestLoadEmptyFile(t *testing.T) {
-	c := auth.Credentials{}
-
-	err := c.Load("non_existent_file.json")
-	assert.NoError(t, err, "Loading from a non-existent file should not return an error")
-	assert.Len(t, c, 0, "Credential slice should be empty after getting from a non-existent file")
-}
-
-func TestSaveCredentials(t *testing.T) {
-	c := auth.Credentials{
-		{Environment: "env1", Username: "user1", Password: "pass1", Nickname: "nick1"},
-		{Environment: "env2", Username: "user2", Password: "pass2", Nickname: "nick2"},
-	}
-
-	tf, err := os.CreateTemp("", "credentials_*.json")
-	if err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
-	}
-	defer os.Remove(tf.Name())
-
-	err = c.Save(tf.Name())
-	assert.NoError(t, err, "Saving to a valid file should not return an error")
-}
-
-func TestSaveAndLoadCredentials(t *testing.T) {
-	c := auth.Credentials{
-		{Environment: "env1", Username: "user1", Password: "pass1", Nickname: "nick1"},
-		{Environment: "env2", Username: "user2", Password: "pass2", Nickname: "nick2"},
-	}
-
-	tf, err := os.CreateTemp("", "credentials_*.json")
-	if err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
-	}
-	defer os.Remove(tf.Name())
-
-	err = c.Save(tf.Name())
-	assert.NoError(t, err, "Saving to a valid file should not return an error")
-
-	var c2 auth.Credentials
-	err = c2.Load(tf.Name())
-	assert.NoError(t, err, "Loading from a valid file should not return an error")
-	assert.EqualValues(t, c, c2, "The credentials retrieved should match the original credentials")
 }
 
 func TestDuplicateCredentials(t *testing.T) {
