@@ -37,7 +37,7 @@ func (s *CredentialService) AddCredential(cred *Credential) error {
 
 func (s *CredentialService) ListCredentials(env string) (Credentials, error) {
 	if env != "" {
-		return s.repo.GetCredentialsByEnv(env)
+		return s.repo.GetByEnv(env)
 	}
 
 	return s.repo.Load()

@@ -10,8 +10,9 @@ import (
 
 type CredentialRepository interface {
 	Load() (Credentials, error)
-	GetCredentialsByEnv(env string) (Credentials, error)
 	Save(c Credentials) error
+	GetById(id string) (Credential, error)
+	GetByEnv(env string) (Credentials, error)
 }
 
 type JSONRepository struct {
@@ -22,7 +23,22 @@ func NewJSONRepository(filePath string) *JSONRepository {
 	return &JSONRepository{filePath: filePath}
 }
 
-func (r *JSONRepository) GetCredentialsByEnv(env string) (Credentials, error) {
+func (r *JSONRepository) GetById(id string) (Credential, error) {
+	creds, err := r.Load()
+	if err != nil {
+		return Credential{}, err
+	}
+
+	for _, c := range creds {
+		if c.ID == id {
+			return c, nil
+		}
+	}
+
+	return Credential{}, fmt.Errorf("credential with ID '%s' not found", id)
+}
+
+func (r *JSONRepository) GetByEnv(env string) (Credentials, error) {
 	if env == "" {
 		return nil, fmt.Errorf("environment not informed!")
 	}

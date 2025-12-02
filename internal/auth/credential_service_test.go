@@ -17,7 +17,11 @@ func NewFakeCredentialRepository(c auth.Credentials) *FakeCredentialRepository {
 	}
 }
 
-func (r *FakeCredentialRepository) GetCredentialsByEnv(env string) (auth.Credentials, error) {
+func (r *FakeCredentialRepository) GetById(id string) (auth.Credential, error) {
+	return auth.Credential{}, nil
+}
+
+func (r *FakeCredentialRepository) GetByEnv(env string) (auth.Credentials, error) {
 	var filteredCreds auth.Credentials
 	for _, c := range r.Credentials {
 		if c.Environment == env {
@@ -86,5 +90,4 @@ func TestListCredentials(t *testing.T) {
 		})
 
 	}
-
 }
