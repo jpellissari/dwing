@@ -33,8 +33,12 @@ func NewCredsCmd() *cobra.Command {
 	credsListCmd := NewCredsListCommand()
 	credsListCmd.GroupID = credsGroup.ID
 
+	credsRemoveCmd := NewCredsRemoveCommand()
+	credsRemoveCmd.GroupID = credsGroup.ID
+
 	credsCmd.AddCommand(credsAddCmd)
 	credsCmd.AddCommand(credsListCmd)
+	credsCmd.AddCommand(credsRemoveCmd)
 
 	return credsCmd
 }

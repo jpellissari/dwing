@@ -42,3 +42,11 @@ func (s *CredentialService) ListCredentials(env string) (Credentials, error) {
 
 	return s.repo.Load()
 }
+
+func (s *CredentialService) RemoveCredential(id string) error {
+	if err := s.repo.RemoveById(id); err != nil {
+		return err
+	}
+
+	return nil
+}

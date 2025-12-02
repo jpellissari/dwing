@@ -91,3 +91,49 @@ func TestListCredentials(t *testing.T) {
 
 	}
 }
+
+func TestRemoveCredential(t *testing.T) {
+	testCases := []struct {
+		name        string
+		credentials auth.Credentials
+		credId      string
+		expectError bool
+	}{
+		{
+			name: "remove existing credential",
+			credentials: auth.Credentials{
+				{Environment: "env1", Username: "user1", Password: "pass1", Nickname: "nick1", ID: "1"},
+				{Environment: "env2", Username: "user2", Password: "pass2", Nickname: "nick2", ID: "2"},
+			},
+			credId:      "1",
+			expectError: false,
+		},
+		{
+			name: "error when removing non-existing credential",
+			credentials: auth.Credentials{
+				{Environment: "env1", Username: "user1", Password: "pass1", Nickname: "nick1", ID: "1"},
+			},
+			credId:      "2",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := NewFakeCredentialRepository(tc.credentials)
+			service := auth.NewCredentialService(repo)
+
+			err := service.RemoveCredential(tc.credId)
+
+			if tc.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				remainingCreds, _ := repo.Load()
+				for _, cred := range remainingCreds {
+					assert.NotEqual(t, tc.credId, cred.ID)
+				}
+			}
+		})
+	}
+}

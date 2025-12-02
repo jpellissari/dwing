@@ -13,6 +13,7 @@ type CredentialRepository interface {
 	Save(c Credentials) error
 	GetById(id string) (Credential, error)
 	GetByEnv(env string) (Credentials, error)
+	RemoveById(id string) error
 }
 
 type JSONRepository struct {
@@ -56,6 +57,32 @@ func (r *JSONRepository) GetByEnv(env string) (Credentials, error) {
 	}
 
 	return filteredCreds, nil
+}
+
+func (r *JSONRepository) RemoveById(id string) error {
+	creds, err := r.Load()
+	if err != nil {
+		return err
+	}
+
+	var updatedCreds Credentials
+	var found bool
+	for i, c := range creds {
+		if c.ID == id {
+			found = true
+			updatedCreds = append(creds[:i], creds[i+1:]...)
+		}
+	}
+
+	if !found {
+		return ErrCredentialNotFound
+	}
+
+	if err := r.Save(updatedCreds); err != nil {
+		return fmt.Errorf("failed to save updated credentials: %w", err)
+	}
+
+	return nil
 }
 
 func (r *JSONRepository) Load() (Credentials, error) {
