@@ -10,6 +10,7 @@ import (
 
 type CredentialRepository interface {
 	Load() (Credentials, error)
+	GetCredentialsByEnv(env string) (Credentials, error)
 	Save(c Credentials) error
 }
 
@@ -19,6 +20,26 @@ type JSONRepository struct {
 
 func NewJSONRepository(filePath string) *JSONRepository {
 	return &JSONRepository{filePath: filePath}
+}
+
+func (r *JSONRepository) GetCredentialsByEnv(env string) (Credentials, error) {
+	if env == "" {
+		return nil, fmt.Errorf("environment not informed!")
+	}
+
+	creds, err := r.Load()
+	if err != nil {
+		return nil, err
+	}
+
+	var filteredCreds Credentials
+	for _, c := range creds {
+		if c.Environment == env {
+			filteredCreds = append(filteredCreds, c)
+		}
+	}
+
+	return filteredCreds, nil
 }
 
 func (r *JSONRepository) Load() (Credentials, error) {

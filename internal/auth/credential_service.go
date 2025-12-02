@@ -34,3 +34,11 @@ func (s *CredentialService) AddCredential(cred *Credential) error {
 
 	return nil
 }
+
+func (s *CredentialService) ListCredentials(env string) (Credentials, error) {
+	if env != "" {
+		return s.repo.GetCredentialsByEnv(env)
+	}
+
+	return s.repo.Load()
+}
