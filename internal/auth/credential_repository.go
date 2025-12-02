@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/google/uuid"
 )
 
 type CredentialRepository interface {
-	Load() (Credentials, error)
-	Save(c Credentials) error
+	Add(cred Credential) error
+	GetAll() (Credentials, error)
+	CheckDuplicate(cred Credential) (bool, error)
 	GetById(id string) (Credential, error)
 	GetByEnv(env string) (Credentials, error)
 	RemoveById(id string) error
@@ -25,7 +28,7 @@ func NewJSONRepository(filePath string) *JSONRepository {
 }
 
 func (r *JSONRepository) GetById(id string) (Credential, error) {
-	creds, err := r.Load()
+	creds, err := r.GetAll()
 	if err != nil {
 		return Credential{}, err
 	}
@@ -40,11 +43,7 @@ func (r *JSONRepository) GetById(id string) (Credential, error) {
 }
 
 func (r *JSONRepository) GetByEnv(env string) (Credentials, error) {
-	if env == "" {
-		return nil, fmt.Errorf("environment not informed!")
-	}
-
-	creds, err := r.Load()
+	creds, err := r.GetAll()
 	if err != nil {
 		return nil, err
 	}
@@ -60,32 +59,53 @@ func (r *JSONRepository) GetByEnv(env string) (Credentials, error) {
 }
 
 func (r *JSONRepository) RemoveById(id string) error {
-	creds, err := r.Load()
+	creds, err := r.GetAll()
 	if err != nil {
 		return err
 	}
 
 	var updatedCreds Credentials
-	var found bool
 	for i, c := range creds {
 		if c.ID == id {
-			found = true
 			updatedCreds = append(creds[:i], creds[i+1:]...)
+			return r.Save(updatedCreds)
 		}
 	}
 
-	if !found {
-		return ErrCredentialNotFound
+	return ErrCredentialNotFound
+}
+
+func (r *JSONRepository) Add(cred Credential) error {
+	creds, err := r.GetAll()
+	if err != nil {
+		return err
 	}
 
-	if err := r.Save(updatedCreds); err != nil {
-		return fmt.Errorf("failed to save updated credentials: %w", err)
+	cred.ID = uuid.New().String()
+	creds = append(creds, cred)
+
+	if err := r.Save(creds); err != nil {
+		return fmt.Errorf("failed to save credentials: %w", err)
 	}
 
 	return nil
 }
 
-func (r *JSONRepository) Load() (Credentials, error) {
+func (r *JSONRepository) CheckDuplicate(cred Credential) (bool, error) {
+	creds, err := r.GetAll()
+	if err != nil {
+		return false, fmt.Errorf("failed to check duplicates: %w", err)
+	}
+
+	for _, existingCred := range creds {
+		if existingCred.Environment == cred.Environment && existingCred.Username == cred.Username {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (r *JSONRepository) GetAll() (Credentials, error) {
 	if _, err := os.Stat(r.filePath); errors.Is(err, os.ErrNotExist) {
 		return Credentials{}, nil
 	}

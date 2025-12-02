@@ -113,7 +113,7 @@ func TestLoad(t *testing.T) {
 			tt.setupFile(t, filePath)
 
 			repo := auth.NewJSONRepository(filePath)
-			creds, err := repo.Load()
+			creds, err := repo.GetAll()
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -270,6 +270,81 @@ func TestSave(t *testing.T) {
 					tt.verifyDirectory(t, dirPath)
 				}
 			}
+		})
+	}
+}
+
+func TestDuplicateCredentials(t *testing.T) {
+	testCases := []struct {
+		name       string
+		cred       auth.Credential
+		wantReturn bool
+	}{
+		{
+			name: "Return true if same env and username",
+			cred: auth.Credential{
+				Username:    "user1",
+				Environment: "env1",
+				Password:    "pass1",
+			},
+			wantReturn: true,
+		},
+		{
+			name: "Return false if same username and different env",
+			cred: auth.Credential{
+				Username:    "user1",
+				Environment: "different",
+				Password:    "pass1",
+			},
+			wantReturn: false,
+		},
+		{
+			name: "Return false if same env and different username",
+			cred: auth.Credential{
+				Username:    "different",
+				Environment: "env1",
+				Password:    "pass1",
+			},
+			wantReturn: false,
+		},
+		{
+			name: "Return false if username and env are different",
+			cred: auth.Credential{
+				Username:    "different",
+				Environment: "different",
+				Password:    "pass1",
+			},
+			wantReturn: false,
+		},
+		{
+			name: "Return true if username and env are equal but nickname is different",
+			cred: auth.Credential{
+				Username:    "user1",
+				Environment: "env1",
+				Password:    "pass1",
+				Nickname:    "teste",
+			},
+			wantReturn: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			filePath := filepath.Join(tmpDir, "credentials.json")
+
+			repo := auth.NewJSONRepository(filePath)
+
+			creds := auth.Credential{
+				Username:    "user1",
+				Environment: "env1",
+				Password:    "pass1",
+				Nickname:    "nick1",
+			}
+			repo.Add(creds)
+
+			equal, _ := repo.CheckDuplicate(tt.cred)
+			assert.Equal(t, tt.wantReturn, equal)
 		})
 	}
 }

@@ -41,7 +41,7 @@ func NewCredsRemoveCommand() *cobra.Command {
 					fmt.Printf("❌ Credential with ID '%s' not found\n", id)
 					return nil
 				}
-				return fmt.Errorf("failed to add credential: %w", err)
+				return fmt.Errorf("failed to remove credential: %w", err)
 			}
 
 			fmt.Println("Credential removed successfully")

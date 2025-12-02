@@ -40,14 +40,14 @@ func NewCredsAddCommand() *cobra.Command {
 					return fmt.Errorf("failed to get credential input: %w", err)
 				}
 
-				return addCredential(&cred)
+				return addCredential(cred)
 			}
 
 			if err := validateFlags(&cred); err != nil {
 				return err
 			}
 
-			return addCredential(&cred)
+			return addCredential(cred)
 		},
 	}
 
@@ -105,7 +105,7 @@ func requiredFieldValidator(s string) error {
 	return nil
 }
 
-func addCredential(c *auth.Credential) error {
+func addCredential(c auth.Credential) error {
 	cfg, err := config.NewDefaultConfig()
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)

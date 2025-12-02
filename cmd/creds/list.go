@@ -34,7 +34,7 @@ func NewCredsListCommand() *cobra.Command {
 
 			creds, err := service.ListCredentials(env)
 			if err != nil {
-				return fmt.Errorf("failed to add credential: %w", err)
+				return fmt.Errorf("failed to list credentials: %w", err)
 			}
 
 			renderTable(creds)

@@ -17,6 +17,20 @@ func NewFakeCredentialRepository(c auth.Credentials) *FakeCredentialRepository {
 	}
 }
 
+func (r *FakeCredentialRepository) Add(cred auth.Credential) error {
+	r.Credentials = append(r.Credentials, cred)
+	return nil
+}
+
+func (r *FakeCredentialRepository) CheckDuplicate(cred auth.Credential) (bool, error) {
+	for _, c := range r.Credentials {
+		if c.Environment == cred.Environment && c.Username == cred.Username && c.Nickname == cred.Nickname {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func (r *FakeCredentialRepository) GetById(id string) (auth.Credential, error) {
 	return auth.Credential{}, nil
 }
@@ -32,12 +46,18 @@ func (r *FakeCredentialRepository) GetByEnv(env string) (auth.Credentials, error
 	return filteredCreds, nil
 }
 
-func (r *FakeCredentialRepository) Load() (auth.Credentials, error) {
-	return r.Credentials, nil
+func (r *FakeCredentialRepository) RemoveById(id string) error {
+	for i, c := range r.Credentials {
+		if c.ID == id {
+			r.Credentials = append(r.Credentials[:i], r.Credentials[i+1:]...)
+			return nil
+		}
+	}
+	return auth.ErrCredentialNotFound
 }
 
-func (r *FakeCredentialRepository) Save(c auth.Credentials) error {
-	return nil
+func (r *FakeCredentialRepository) GetAll() (auth.Credentials, error) {
+	return r.Credentials, nil
 }
 
 func TestListCredentials(t *testing.T) {
@@ -129,7 +149,7 @@ func TestRemoveCredential(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				remainingCreds, _ := repo.Load()
+				remainingCreds, _ := repo.GetAll()
 				for _, cred := range remainingCreds {
 					assert.NotEqual(t, tc.credId, cred.ID)
 				}

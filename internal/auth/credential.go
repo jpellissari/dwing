@@ -2,9 +2,6 @@ package auth
 
 import (
 	"errors"
-	"fmt"
-
-	"github.com/google/uuid"
 )
 
 type Credential struct {
@@ -28,40 +25,4 @@ func (c *Credential) Validate() error {
 	return nil
 }
 
-func (c *Credential) GenerateID() {
-	c.ID = uuid.New().String()
-}
-
 type Credentials []Credential
-
-func (c *Credentials) Add(cred Credential) error {
-	if err := cred.Validate(); err != nil {
-		return err
-	}
-
-	cred.GenerateID()
-
-	*c = append(*c, cred)
-
-	return nil
-}
-
-func (c *Credentials) Delete(i int) error {
-	cl := *c
-	if i <= 0 || i > len(cl) {
-		return fmt.Errorf("Credential %d does not exists", i)
-	}
-
-	*c = append(cl[:i-1], cl[i:]...)
-
-	return nil
-}
-
-func (c *Credentials) CheckDuplicate(cred Credential) bool {
-	for _, existingCred := range *c {
-		if existingCred.Environment == cred.Environment && existingCred.Username == cred.Username {
-			return true
-		}
-	}
-	return false
-}
