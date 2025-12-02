@@ -3,9 +3,12 @@ package auth
 import (
 	"errors"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 type Credential struct {
+	ID          string `json:"id"`
 	Environment string `json:"environment"`
 	Username    string `json:"username"`
 	Password    string `json:"password"`
@@ -25,12 +28,18 @@ func (c *Credential) Validate() error {
 	return nil
 }
 
+func (c *Credential) GenerateID() {
+	c.ID = uuid.New().String()
+}
+
 type Credentials []Credential
 
 func (c *Credentials) Add(cred Credential) error {
 	if err := cred.Validate(); err != nil {
 		return err
 	}
+
+	cred.GenerateID()
 
 	*c = append(*c, cred)
 
